@@ -1,0 +1,93 @@
+
+\documentclass[twocolumn, 10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\geometry{margin=2cm}
+
+\title{\textbf{Neural ODEs sobre Datos Biológicos}}
+\author{Andrés Sebastián Guevara Ortiz, Thomas Jaramillo Aguirre \\ \textit{Análisis Numérico, Universidad Nacional de Colombia} \\ \textit{Prof. Carlos Manuel Orrego Franco}}
+\date{27 de mayo de 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Descripción del Dataset}
+El estudio se centra en el dataset \textbf{COVID-19 JHU (nuevos casos diarios)} [cite: 40]. Las características principales del conjunto de datos son:
+\begin{itemize}
+    \item \textbf{Trayectorias:} 178 [cite: 40].
+    \item \textbf{Pasos de tiempo:} 400 [cite: 40].
+    \item \textbf{Dimensiones:} 1 [cite: 40].
+    \item \textbf{Variables:} Nuevos casos (normalizados) [cite: 40].
+    \item \textbf{Rango:} $[-1.098, 7.928]$ [cite: 40].
+\end{itemize}
+
+En la Figura 1, se presentan algunas de las trayectorias para su análisis descriptivo y exploratorio [cite: 41].
+
+\section{Hiperparámetros Elegidos y Justificación}
+Se configuraron los siguientes hiperparámetros para los modelos entrenados [cite: 42]:
+\begin{itemize}
+    \item \textbf{dim\_latente:} 8. Se eligió este valor debido a que el modelo de COVID-19 es multifactorial, requiriendo considerar varias causas de movimiento; se evitó un valor mayor para prevenir el \textit{overfitting} [cite: 43].
+    \item \textbf{n\_pasos\_ode:} 10. Seleccionado como cota superior por temas de procesamiento y tiempo, buscando manejar la dinámica sin divergencias excesivas ante los picos marcados [cite: 44].
+    \item \textbf{learning\_rate:} 0.001 ($1 \times 10^{-3}$), considerado ideal basándose en experiencias previas del curso [cite: 45].
+    \item \textbf{n\_epochs:} 25. Cantidad considerable para que el modelo observe el dataset adecuadamente [cite: 46].
+    \item \textbf{batch\_size:} 32. Ajustado a la cantidad moderada de trayectorias disponibles [cite: 47].
+    \item \textbf{dim\_oculto\_f:} 48. Necesarias para que las redes neuronales comprendan los cambios bruscos y picos sin sobreajustar [cite: 48].
+    \item \textbf{dim\_oculto\_enc:} 32. Estructura de embudo para extraer factores esenciales y evitar el aprendizaje de ruido [cite: 49].
+    \item \textbf{dim\_oculto\_dec:} 48. Requerida para una reconstrucción precisa de los picos [cite: 50].
+\end{itemize}
+
+\section{Resultados}
+A continuación, se presentan los resultados de la métrica RMSE (Root Mean Square Error) para reconstrucción (rec) y extrapolación (ext) bajo diferentes porcentajes de observación [cite: 51, 52].
+
+\begin{table*}[h]
+\centering
+\caption{Tabla de resultados RMSE y tiempos de entrenamiento [cite: 52]}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+Modelo & 30\% rec & 30\% ext & 60\% rec & 60\% ext & 100\% rec & Params & Tiempo \\ \midrule
+Método Clásico & 0.0000 & 0.1142 & 0.0000 & 0.0866 & 0.0000 & 4 & 0.0s \\
+Neural ODE & 0.4999 & 0.5011 & 0.4979 & 0.5049 & 0.5007 & 3,721 & 1646.5s \\
+Latent ODE & 0.5696 & 0.5694 & 0.5673 & 0.5727 & 0.5695 & 7,593 & 2083.8s \\ \bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Figuras y Visualización}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{image_e91d71.png}
+    \caption{Figura 1: Exploración del dataset COVID-19 JHU [cite: 53, 54].}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{image_ebc4e5.png}
+    \caption{Figura 2: Comparación de modelos con 60\% de observaciones [cite: 55].}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{image_f74054.png}
+    \caption{Figura 3: Curvas de aprendizaje de Neural ODE vs. Latent ODE [cite: 56].}
+\end{figure}
+
+\section{Análisis de Resultados}
+\paragraph{P1: Porcentaje de observación y Neural ODE.} En la simulación realizada, la Neural ODE no superó a los otros modelos en ningún porcentaje, probablemente debido a la elección de hiperparámetros [cite: 58, 59, 60].
+
+\paragraph{P2: Orden inverso del Encoder RNN.} La razón del orden inverso es permitir la reconstrucción de la trayectoria desde el tiempo final para inferir de manera óptima el estado latente inicial ($z_{t_0}$), del cual depende la trayectoria construida por el \textit{solver} [cite: 61, 62].
+
+\paragraph{P3: Resultados sorpresivos.} Se destacó que en el método clásico el RMSE de extrapolación disminuyó al pasar del 30\% al 60\% de observaciones, beneficiándose de la reducción de "huecos" en los datos, a diferencia de los métodos ODE [cite: 63, 64].
+
+\paragraph{P4: Limitaciones de Neural ODE.} No se recomienda el uso de Neural ODE en problemas con alta frecuencia de picos, ya que estos dificultan la diferenciación en la función de reconstrucción [cite: 65, 66].
+
+\section{Conclusiones}
+Se concluye que los métodos Neural ODE y Latent ODE presentan una disminución en efectividad ante trayectorias con muchos picos [cite: 67, 68]. El método clásico resultó superior para este dataset específico, favorecido por la ausencia de valores faltantes (NaNs) [cite: 69]. Para mejorar los métodos ODE, sería necesario aumentar la cantidad de pasos para capturar cambios bruscos, ajustar épocas y refinar hiperparámetros como la tasa de aprendizaje o el número de neuronas, lo cual incrementaría significativamente el costo computacional [cite: 70, 71]. Asimismo, es crítico reconocer que la naturaleza del \textit{solver} y la inferencia del estado inicial impactan directamente el RMSE [cite: 72].
+
+\end{document}
